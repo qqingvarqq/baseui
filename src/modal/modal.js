@@ -30,7 +30,7 @@ import type {
   ElementRefT,
 } from './types.js';
 
-const focusableElementSelectors = [
+const FOCUSABLE = [
   `a[href]:not([tabindex="-1"])`,
   `area[href]:not([tabindex="-1"])`,
   `input:not([disabled]):not([type="hidden"]):not([tabindex="-1"])`,
@@ -39,10 +39,6 @@ const focusableElementSelectors = [
   `select:not([disabled]):not([tabindex="-1"])`,
   `*[tabindex]:not([tabindex="-1"])`,
 ];
-
-const getFocusableElementsInNode = node => {
-  return node.querySelectorAll(focusableElementSelectors.join(', '));
-};
 
 class Modal extends React.Component<ModalPropsT, ModalStateT> {
   static defaultProps: $Shape<ModalPropsT> = {
@@ -130,9 +126,8 @@ class Modal extends React.Component<ModalPropsT, ModalStateT> {
         return;
       }
 
-      const dialogNode = this.getRef('Dialog').current;
-      const focusableElements = [...getFocusableElementsInNode(dialogNode)];
       const focusedElement = document.activeElement;
+      const focusableElements = this.getFocusableElements();
       const position = focusableElements.indexOf(focusedElement);
       const lastPosition = focusableElements.length - 1;
 
@@ -239,6 +234,15 @@ class Modal extends React.Component<ModalPropsT, ModalStateT> {
     }
   }
 
+  getFocusableElements = () => {
+    const dialog = this.getRef('Dialog').current;
+    if (!dialog) {
+      return [];
+    } else {
+      return [].slice.call(dialog.querySelectorAll(FOCUSABLE.join(', ')));
+    }
+  };
+
   captureLastFocus = () => {
     this.lastFocus = ownerDocument(this.getMountNode()).activeElement;
   };
@@ -257,11 +261,18 @@ class Modal extends React.Component<ModalPropsT, ModalStateT> {
     if (!this.props.autofocus) {
       return;
     }
+
     const dialog = this.getRef('Dialog').current;
     if (!dialog) {
       return;
     }
-    dialog.focus();
+
+    const focusableElements = this.getFocusableElements();
+    if (focusableElements.length === 0) {
+      dialog.focus();
+    } else {
+      focusableElements[0].focus();
+    }
   };
 
   animateOutComplete = () => {
