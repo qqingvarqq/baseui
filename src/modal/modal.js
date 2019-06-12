@@ -30,6 +30,20 @@ import type {
   ElementRefT,
 } from './types.js';
 
+const focusableElementSelectors = [
+  `a[href]:not([tabindex="-1"])`,
+  `area[href]:not([tabindex="-1"])`,
+  `input:not([disabled]):not([type="hidden"]):not([tabindex="-1"])`,
+  `button:not([disabled]):not([tabindex="-1"])`,
+  `textarea:not([disabled]):not([tabindex="-1"])`,
+  `select:not([disabled]):not([tabindex="-1"])`,
+  `*[tabindex]:not([tabindex="-1"])`,
+];
+
+const getFocusableElementsInNode = node => {
+  return node.querySelectorAll(focusableElementSelectors.join(', '));
+};
+
 class Modal extends React.Component<ModalPropsT, ModalStateT> {
   static defaultProps: $Shape<ModalPropsT> = {
     animate: true,
@@ -79,13 +93,15 @@ class Modal extends React.Component<ModalPropsT, ModalStateT> {
 
   addDomEvents() {
     if (__BROWSER__) {
-      document.addEventListener('keyup', this.onDocumentKeyPress);
+      document.addEventListener('keydown', this.onDocumentKeyDown);
+      document.addEventListener('keyup', this.onDocumentKeyUp);
     }
   }
 
   removeDomEvents() {
     if (__BROWSER__) {
-      document.removeEventListener('keyup', this.onDocumentKeyPress);
+      document.removeEventListener('keydown', this.onDocumentKeyDown);
+      document.removeEventListener('keyup', this.onDocumentKeyUp);
     }
   }
 
@@ -104,7 +120,48 @@ class Modal extends React.Component<ModalPropsT, ModalStateT> {
     }
   }
 
-  onDocumentKeyPress = (event: KeyboardEvent) => {
+  onDocumentKeyDown = (event: KeyboardEvent) => {
+    // Trap focus in modal
+    if (event.key === 'Tab') {
+      const {altKey, ctrlKey, metaKey, shiftKey} = event;
+
+      // Skip if any of these keys are being pressed
+      if (altKey || ctrlKey || metaKey) {
+        return;
+      }
+
+      const dialogNode = this.getRef('Dialog').current;
+      const focusableElements = [...getFocusableElementsInNode(dialogNode)];
+      const focusedElement = document.activeElement;
+      const position = focusableElements.indexOf(focusedElement);
+      const lastPosition = focusableElements.length - 1;
+
+      let nextElement = null;
+
+      if (shiftKey) {
+        if (position === 0) {
+          nextElement = focusableElements[lastPosition];
+        } else {
+          nextElement = focusableElements[position - 1];
+        }
+      } else {
+        if (position === lastPosition) {
+          nextElement = focusableElements[0];
+        } else {
+          nextElement = focusableElements[position + 1];
+        }
+      }
+
+      if (nextElement) {
+        event.preventDefault();
+        nextElement.focus();
+      }
+
+      return;
+    }
+  };
+
+  onDocumentKeyUp = (event: KeyboardEvent) => {
     if (event.key !== 'Escape') {
       return;
     }
