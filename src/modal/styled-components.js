@@ -127,6 +127,24 @@ export const Close = styled<SharedStylePropsArgT>('button', props => {
     paddingRight: 0,
     paddingBottom: 0,
 
+    // Custom button styles
+    cursor: 'pointer',
+    color: $theme.colors.mono700,
+    borderColor: 'transparent',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    transitionProperty: 'color, borderColor',
+    transitionDuration: $theme.animation.timing100,
+    ':focus': {
+      color: $theme.colors.mono800,
+      borderColor: $theme.colors.primary,
+      borderWidth: '1px',
+      borderStyle: 'solid',
+    },
+    ':hover': {
+      color: $theme.colors.mono800,
+    },
+
     // Positioning
     position: 'absolute',
     top: $theme.sizing.scale500,
@@ -136,13 +154,6 @@ export const Close = styled<SharedStylePropsArgT>('button', props => {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    cursor: 'pointer',
-    color: $theme.colors.mono700,
-    transitionProperty: 'color',
-    transitionDuration: $theme.animation.timing100,
-    ':hover': {
-      color: $theme.colors.mono800,
-    },
   };
 });
 
